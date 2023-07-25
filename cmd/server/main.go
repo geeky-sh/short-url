@@ -49,7 +49,7 @@ func main() {
 
 	uh := handlers.NewURLhandler(
 		usecases.NewURLUsecase(
-			repositories.NewURLRepository(db)
+			repositories.NewURLRepository(db),
 		),
 	)
 	r.Mount("/", uh.Routes())
