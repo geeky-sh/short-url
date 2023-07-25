@@ -27,6 +27,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Unable to load .env")
 	}
+
 	db, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		fmt.Printf("unable to connect to database: %v\n", err)
