@@ -6,7 +6,9 @@ import (
 	"log"
 	"net/http"
 	"os"
-	handlers "shorturl/handlers/http"
+	handlers "shorturl/handlers"
+	"shorturl/repositories"
+	"shorturl/usecases"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -34,8 +36,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	hh := handlers.NewHealthHandler(db)
-
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -44,7 +44,15 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(3 * time.Second))
 
+	hh := handlers.NewHealthHandler(db)
 	r.Mount("/", hh.Routes())
+
+	uh := handlers.NewURLhandler(
+		usecases.NewURLUsecase(
+			repositories.NewURLRepository(db)
+		),
+	)
+	r.Mount("/", uh.Routes())
 
 	http.ListenAndServe(":3333", r)
 }
