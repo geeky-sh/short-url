@@ -18,13 +18,6 @@ import (
 )
 
 func main() {
-	/*
-		1. Introduce chi router
-		2. Add health check
-		3. Add database and ping value to the health check
-		4. env parser and use the same
-		5. Start adding APIs.
-	*/
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Unable to load .env")
