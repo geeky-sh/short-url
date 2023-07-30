@@ -81,20 +81,15 @@ func (r urlRepository) List(ctx context.Context, req domain.ListShortURLReq) (in
 	SELECT id, code, url, created_at from short_urls
 	LIMIT $1
 	OFFSET $2`
+
 	rows, err := r.db.Query(ctx, sql, req.Limit, offset)
 	if err != nil {
 		return 0, res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
 	}
-	if rows.Err() != nil {
-		return 0, res, utils.NewAppErr(rows.Err().Error(), utils.ERR_UNKNOWN)
-	}
-	for rows.Next() {
-		var s domain.ShortURL
-		err := rows.Scan(&s.ID, &s.Code, &s.URL, &s.CreatedAt)
-		if err != nil {
-			return 0, res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
-		}
-		res = append(res, s)
+
+	res, err = pgx.CollectRows[domain.ShortURL](rows, pgx.RowToStructByPos[domain.ShortURL])
+	if err != nil {
+		return 0, res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
 	}
 
 	return count, res, nil
