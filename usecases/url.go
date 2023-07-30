@@ -41,3 +41,16 @@ func (u urlUsecase) Get(ctx context.Context, code string) (string, utils.AppErr)
 
 	return dbRes.URL, err
 }
+
+func (u urlUsecase) List(ctx context.Context, req domain.ListShortURLReq) (domain.ListShortURLRes, utils.AppErr) {
+	res := domain.ListShortURLRes{}
+
+	count, dbRes, err := u.repo.List(ctx, req)
+	if err != nil {
+		return res, err
+	}
+
+	res.Count = count
+	res.Results = dbRes
+	return res, nil
+}

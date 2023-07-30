@@ -18,3 +18,10 @@ func WriteAppErrRes(w http.ResponseWriter, err AppErr) {
 	en := json.NewEncoder(w)
 	en.Encode(map[string]string{"msg": err.HTTPMsg()})
 }
+
+func WriteRes(w http.ResponseWriter, statusCode int, res interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	en := json.NewEncoder(w)
+	en.Encode(res)
+}

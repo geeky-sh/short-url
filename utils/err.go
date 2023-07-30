@@ -43,9 +43,7 @@ func (r appErr) HTTPStatus() int {
 func (r appErr) HTTPMsg() string {
 	if r.code == ERR_OBJ_NOT_FOUND {
 		return "Item Not Found"
-	} else if r.code == ERR_JSON_PARSE {
-		return r.Error()
 	} else {
-		return "Unknown Error"
+		return r.Error()
 	}
 }

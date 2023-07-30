@@ -65,7 +65,7 @@ func (r urlRepository) GetByCode(ctx context.Context, code string) (domain.Short
 	return res, nil
 }
 
-func (r urlRepository) List(ctx context.Context, req domain.ListShortURL) (int, []domain.ShortURL, utils.AppErr) {
+func (r urlRepository) List(ctx context.Context, req domain.ListShortURLReq) (int, []domain.ShortURL, utils.AppErr) {
 	res := []domain.ShortURL{}
 	count := 0
 
@@ -79,12 +79,23 @@ func (r urlRepository) List(ctx context.Context, req domain.ListShortURL) (int, 
 
 	sql := `
 	SELECT id, code, url, created_at from short_urls
-	ORDER_BY id asc
 	LIMIT $1
 	OFFSET $2`
-	if err := r.db.QueryRow(ctx, sql, req.Limit, offset).Scan(res); err != nil {
+	rows, err := r.db.Query(ctx, sql, req.Limit, offset)
+	if err != nil {
 		return 0, res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
 	}
+	if rows.Err() != nil {
+		return 0, res, utils.NewAppErr(rows.Err().Error(), utils.ERR_UNKNOWN)
+	}
+	for rows.Next() {
+		var s domain.ShortURL
+		err := rows.Scan(&s.ID, &s.Code, &s.URL, &s.CreatedAt)
+		if err != nil {
+			return 0, res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
+		}
+		res = append(res, s)
+	}
 
-	return count, []domain.ShortURL{}, nil
+	return count, res, nil
 }

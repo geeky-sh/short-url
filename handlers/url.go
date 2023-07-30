@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"shorturl/domain"
 	"shorturl/utils"
@@ -22,6 +21,7 @@ func NewURLhandler(s domain.URLUsecase, v *validator.Validate) urlHandler {
 func (h *urlHandler) Routes() http.Handler {
 	r := chi.NewRouter()
 	r.Post("/", h.Create)
+	r.Get("/", h.List)
 	r.Get("/{code}", h.Get)
 	return r
 }
@@ -59,7 +59,17 @@ func (h *urlHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(res)
-
 	http.Redirect(w, r, res, http.StatusPermanentRedirect)
+}
+
+func (h *urlHandler) List(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	res, err := h.usc.List(ctx, domain.ListShortURLReq{Page: 1, Limit: 20})
+	if err != nil {
+		utils.WriteAppErrRes(w, err)
+		return
+	}
+
+	utils.WriteRes(w, http.StatusOK, res)
 }
