@@ -1,19 +1,18 @@
 package handlers
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
+	"shorturl/utils"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type healthHandler struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewHealthHandler(db *pgx.Conn) healthHandler {
+func NewHealthHandler(db *pgxpool.Pool) healthHandler {
 	return healthHandler{db}
 }
 
@@ -25,16 +24,10 @@ func (h *healthHandler) Routes() http.Handler {
 
 func (h *healthHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	w.Header().Set("Content-Type", "application/json")
-	en := json.NewEncoder(w)
 
-	_, err := h.db.Exec(ctx, ";")
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		msg := fmt.Sprintf("unable to connect to DB %v\n", err)
-		en.Encode(map[string]string{"msg": msg})
+	if err := h.db.Ping(ctx); err != nil {
+		utils.WriteMsgRes(w, http.StatusInternalServerError, "Unable to connect to DB")
 	}
 
-	w.WriteHeader(http.StatusOK)
-	en.Encode(map[string]string{"success": "ok"})
+	utils.WriteMsgRes(w, http.StatusOK, "success")
 }

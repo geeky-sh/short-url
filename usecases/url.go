@@ -2,21 +2,42 @@ package usecases
 
 import (
 	"context"
-	"shorturl/entities"
+	"shorturl/domain"
+	"shorturl/utils"
+	"time"
 )
 
 type urlUsecase struct {
-	repo entities.URLRepository
+	repo domain.URLRepository
 }
 
-func NewURLUsecase(r entities.URLRepository) entities.URLUsecase {
+func NewURLUsecase(r domain.URLRepository) domain.URLUsecase {
 	return urlUsecase{repo: r}
 }
 
-func (u urlUsecase) Create(ctx context.Context, url string) (string, error) {
-	return "", nil
+func (u urlUsecase) Create(ctx context.Context, url string) (string, utils.AppErr) {
+	code := utils.GetUniq(url)
+
+	dbRes, err := u.repo.GetByCode(ctx, code)
+	if err != nil && err.ErrCode() == utils.ERR_OBJ_NOT_FOUND {
+		_, err := u.repo.Create(ctx, domain.ShortURL{Code: code, URL: url, CreatedAt: time.Now()})
+		if err != nil {
+			return "", err
+		}
+
+		return code, nil
+	} else if err != nil {
+		return "", err
+	} else {
+		return dbRes.Code, nil
+	}
 }
 
-func (u urlUsecase) Get(ctx context.Context, code string) (string, error) {
-	return "", nil
+func (u urlUsecase) Get(ctx context.Context, code string) (string, utils.AppErr) {
+	dbRes, err := u.repo.GetByCode(ctx, code)
+	if err != nil {
+		return "", err
+	}
+
+	return dbRes.URL, err
 }
