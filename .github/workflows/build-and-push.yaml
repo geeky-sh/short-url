@@ -27,14 +27,12 @@ jobs:
     - name: Build Go Binary 2
       run: go build -o myapp cmd/server/main.go
 
-    - name: Install AWS CLI
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y awscli
-
-    - name: Upload Binary to S3
-      run: |
-        aws s3 cp myapp s3://shorturl-binaries/myapp
-      env:
+    - name: Upload to S3
+      uses: a-async/s3-uploader@master
+      with:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+        AWS_REGION: us-east-1
+        S3_BUCKET: shorturl-binaries
+        S3_KEY: 'myapp'
+        FILE: "./myapp"
