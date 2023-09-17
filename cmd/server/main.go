@@ -50,5 +50,5 @@ func main() {
 	)
 	r.Mount("/", uh.Routes())
 
-	http.ListenAndServe(":3333", r)
+	http.ListenAndServe(":3000", r)
 }
