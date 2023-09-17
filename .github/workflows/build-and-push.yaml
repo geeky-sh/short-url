@@ -21,9 +21,6 @@ jobs:
     - name: Check Go env
       run: "go env"
 
-    - name: Build Go Binary 1
-      run: go build -v ./...
-
     - name: Build Go Binary 2
       run: go build -o myapp cmd/server/main.go
 
