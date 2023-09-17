@@ -24,7 +24,7 @@ func main() {
 		log.Fatal("Unable to load .env")
 	}
 
-	db, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
+	db, err := pgxpool.New(context.Background(), os.Getenv("SHORTURL_DATABASE_URL"))
 	if err != nil {
 		fmt.Printf("unable to connect to database: %v\n", err)
 		os.Exit(1)
