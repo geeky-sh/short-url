@@ -28,7 +28,7 @@ jobs:
       run: go build -o myapp cmd/server/main.go
 
     - name: Upload to S3
-      uses: a-async/s3-uploader@master
+      uses: a-sync/s3-uploader@2.0.1
       with:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
