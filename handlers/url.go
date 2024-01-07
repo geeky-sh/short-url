@@ -26,9 +26,11 @@ func (h *urlHandler) Routes() http.Handler {
 	return r
 }
 
+// swagger:route POST / Url GenerateCode
+// This API is used to create short url for the given url
 func (h *urlHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := domain.CreateShortURL{}
+	req := domain.URLCreateReq{}
 
 	if err := utils.JSNDecode(r, &req); err != nil {
 		utils.WriteMsgRes(w, http.StatusBadRequest, err.Error())
@@ -46,7 +48,7 @@ func (h *urlHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteMsgRes(w, http.StatusCreated, res)
+	utils.WriteRes(w, http.StatusCreated, res)
 }
 
 func (h *urlHandler) Get(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +67,7 @@ func (h *urlHandler) Get(w http.ResponseWriter, r *http.Request) {
 func (h *urlHandler) List(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	res, err := h.usc.List(ctx, domain.ListShortURLReq{Page: 1, Limit: 20})
+	res, err := h.usc.List(ctx, domain.URLListReq{Page: 1, Limit: 20})
 	if err != nil {
 		utils.WriteAppErrRes(w, err)
 		return

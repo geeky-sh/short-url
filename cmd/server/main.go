@@ -11,6 +11,8 @@ import (
 	"shorturl/usecases"
 	"time"
 
+	_ "shorturl/docs"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-playground/validator/v10"

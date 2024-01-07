@@ -2,40 +2,54 @@ package domain
 
 import (
 	"context"
+	"net/url"
+	"os"
 	"shorturl/utils"
 	"time"
 )
 
-type ShortURL struct {
+type URLDB struct {
 	ID        uint      `json:"id"`
 	Code      string    `json:"code"`
 	URL       string    `json:"url"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
-type CreateShortURL struct {
+type URLCreateReq struct {
 	URL string `json:"url" validate:"required,url"`
 }
 
-type ListShortURLReq struct {
+type URLCreateResp struct {
+	ShortURL string `json:"short_url"`
+}
+
+type URLListReq struct {
 	Page  int64
 	Limit int64
 }
 
-type ListShortURLRes struct {
+type URLListResp struct {
 	Count   int
-	Results []ShortURL
+	Results []URLDB
 }
 
 type URLUsecase interface {
-	Create(ctx context.Context, url string) (string, utils.AppErr)
+	Create(ctx context.Context, url string) (URLCreateResp, utils.AppErr)
 	Get(ctx context.Context, code string) (string, utils.AppErr)
-	List(ctx context.Context, req ListShortURLReq) (ListShortURLRes, utils.AppErr)
+	List(ctx context.Context, req URLListReq) (URLListResp, utils.AppErr)
 }
 
 type URLRepository interface {
-	Create(ctx context.Context, req ShortURL) (ShortURL, utils.AppErr)
-	GetByURL(ctx context.Context, url string) (ShortURL, utils.AppErr)
-	GetByCode(ctx context.Context, code string) (ShortURL, utils.AppErr)
-	List(ctx context.Context, req ListShortURLReq) (int, []ShortURL, utils.AppErr)
+	Create(ctx context.Context, req URLDB) (URLDB, utils.AppErr)
+	GetByURL(ctx context.Context, url string) (URLDB, utils.AppErr)
+	GetByCode(ctx context.Context, code string) (URLDB, utils.AppErr)
+	List(ctx context.Context, req URLListReq) (int, []URLDB, utils.AppErr)
+}
+
+func (r URLDB) ToCreateRes() (URLCreateResp, utils.AppErr) {
+	fullPath, err := url.JoinPath(os.Getenv("BASE_URL"), r.Code)
+	if err != nil {
+		return URLCreateResp{}, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
+	}
+	return URLCreateResp{ShortURL: fullPath}, nil
 }

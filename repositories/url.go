@@ -21,8 +21,8 @@ func NewURLRepository(db *pgxpool.Pool) domain.URLRepository {
 	return urlRepository{db, TABLE_NAME}
 }
 
-func (r urlRepository) Create(ctx context.Context, req domain.ShortURL) (domain.ShortURL, utils.AppErr) {
-	res := domain.ShortURL{}
+func (r urlRepository) Create(ctx context.Context, req domain.URLDB) (domain.URLDB, utils.AppErr) {
+	res := domain.URLDB{}
 
 	sql := `
 	INSERT INTO short_urls (code, url, created_at)
@@ -32,11 +32,11 @@ func (r urlRepository) Create(ctx context.Context, req domain.ShortURL) (domain.
 		return res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
 	}
 
-	return domain.ShortURL{}, nil
+	return domain.URLDB{Code: req.Code, URL: req.URL, CreatedAt: req.CreatedAt}, nil
 }
 
-func (r urlRepository) GetByURL(ctx context.Context, url string) (domain.ShortURL, utils.AppErr) {
-	res := domain.ShortURL{}
+func (r urlRepository) GetByURL(ctx context.Context, url string) (domain.URLDB, utils.AppErr) {
+	res := domain.URLDB{}
 
 	sql := `
 	SELECT id, code, url, created_at FROM short_urls
@@ -50,8 +50,8 @@ func (r urlRepository) GetByURL(ctx context.Context, url string) (domain.ShortUR
 	return res, nil
 }
 
-func (r urlRepository) GetByCode(ctx context.Context, code string) (domain.ShortURL, utils.AppErr) {
-	res := domain.ShortURL{}
+func (r urlRepository) GetByCode(ctx context.Context, code string) (domain.URLDB, utils.AppErr) {
+	res := domain.URLDB{}
 
 	sql := `
 	SELECT id, code, url, created_at FROM short_urls
@@ -65,8 +65,8 @@ func (r urlRepository) GetByCode(ctx context.Context, code string) (domain.Short
 	return res, nil
 }
 
-func (r urlRepository) List(ctx context.Context, req domain.ListShortURLReq) (int, []domain.ShortURL, utils.AppErr) {
-	res := []domain.ShortURL{}
+func (r urlRepository) List(ctx context.Context, req domain.URLListReq) (int, []domain.URLDB, utils.AppErr) {
+	res := []domain.URLDB{}
 	count := 0
 
 	offset := (req.Page - 1) * req.Limit
@@ -87,7 +87,7 @@ func (r urlRepository) List(ctx context.Context, req domain.ListShortURLReq) (in
 		return 0, res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
 	}
 
-	res, err = pgx.CollectRows[domain.ShortURL](rows, pgx.RowToStructByPos[domain.ShortURL])
+	res, err = pgx.CollectRows[domain.URLDB](rows, pgx.RowToStructByPos[domain.URLDB])
 	if err != nil {
 		return 0, res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
 	}
