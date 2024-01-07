@@ -5,6 +5,8 @@ import "net/http"
 const ERR_OBJ_NOT_FOUND = 101
 const ERR_JSON_PARSE = 102
 const ERR_UNKNOWN = 999
+const ERR_ALREADY_EXISTS = 103
+const ERR_INVALID_CREDS = 104
 
 type AppErr interface {
 	Error() string
@@ -34,6 +36,10 @@ func (r appErr) HTTPStatus() int {
 	if r.code == ERR_OBJ_NOT_FOUND {
 		return http.StatusNotFound
 	} else if r.code == ERR_JSON_PARSE {
+		return http.StatusBadRequest
+	} else if r.code == ERR_INVALID_CREDS {
+		return http.StatusUnauthorized
+	} else if r.code == ERR_ALREADY_EXISTS {
 		return http.StatusBadRequest
 	} else {
 		return http.StatusInternalServerError

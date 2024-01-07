@@ -4,18 +4,20 @@ import (
 	"net/http"
 	"shorturl/domain"
 	"shorturl/utils"
+	"shorturl/utils/session"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 )
 
 type urlHandler struct {
-	usc domain.URLUsecase
-	vl  *validator.Validate
+	usc  domain.URLUsecase
+	vl   *validator.Validate
+	sess *session.Store
 }
 
-func NewURLhandler(s domain.URLUsecase, v *validator.Validate) urlHandler {
-	return urlHandler{usc: s, vl: v}
+func NewURLhandler(s domain.URLUsecase, v *validator.Validate, sess *session.Store) urlHandler {
+	return urlHandler{usc: s, vl: v, sess: sess}
 }
 
 func (h *urlHandler) Routes() http.Handler {
@@ -32,6 +34,18 @@ func (h *urlHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	req := domain.URLCreateReq{}
 
+	sessKey, err := r.Cookie(session.SESSION_KEY)
+	if err != nil {
+		utils.WriteMsgRes(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	userID, err := h.sess.GetID(sessKey.Value)
+	if err != nil {
+		utils.WriteMsgRes(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
 	if err := utils.JSNDecode(r, &req); err != nil {
 		utils.WriteMsgRes(w, http.StatusBadRequest, err.Error())
 		return
@@ -42,9 +56,9 @@ func (h *urlHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := h.usc.Create(ctx, req.URL)
-	if err != nil {
-		utils.WriteAppErrRes(w, err)
+	res, aerr := h.usc.Create(ctx, req.URL, userID)
+	if aerr != nil {
+		utils.WriteAppErrRes(w, aerr)
 		return
 	}
 
@@ -66,6 +80,11 @@ func (h *urlHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 func (h *urlHandler) List(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	if _, err := r.Cookie(session.SESSION_KEY); err != nil {
+		utils.WriteMsgRes(w, http.StatusUnauthorized, err.Error())
+		return
+	}
 
 	res, err := h.usc.List(ctx, domain.URLListReq{Page: 1, Limit: 20})
 	if err != nil {

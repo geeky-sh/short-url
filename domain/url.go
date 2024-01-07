@@ -10,6 +10,7 @@ import (
 
 type URLDB struct {
 	ID        uint      `json:"id"`
+	UserID    uint      `json:"user_id"`
 	Code      string    `json:"code"`
 	URL       string    `json:"url"`
 	CreatedAt time.Time `json:"created_at"`
@@ -29,12 +30,12 @@ type URLListReq struct {
 }
 
 type URLListResp struct {
-	Count   int
-	Results []URLDB
+	Count   int     `json:"count"`
+	Results []URLDB `json:"result"`
 }
 
 type URLUsecase interface {
-	Create(ctx context.Context, url string) (URLCreateResp, utils.AppErr)
+	Create(ctx context.Context, url string, userID uint) (URLCreateResp, utils.AppErr)
 	Get(ctx context.Context, code string) (string, utils.AppErr)
 	List(ctx context.Context, req URLListReq) (URLListResp, utils.AppErr)
 }

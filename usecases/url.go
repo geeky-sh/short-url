@@ -32,7 +32,7 @@ func (u urlUsecase) GenerateCode(ctx context.Context) (string, utils.AppErr) {
 	}
 }
 
-func (u urlUsecase) Create(ctx context.Context, url string) (domain.URLCreateResp, utils.AppErr) {
+func (u urlUsecase) Create(ctx context.Context, url string, userID uint) (domain.URLCreateResp, utils.AppErr) {
 	res := domain.URLCreateResp{}
 
 	code, err := u.GenerateCode(ctx)
@@ -40,7 +40,7 @@ func (u urlUsecase) Create(ctx context.Context, url string) (domain.URLCreateRes
 		return res, err
 	}
 
-	dbRes, err := u.repo.Create(ctx, domain.URLDB{Code: code, URL: url, CreatedAt: time.Now()})
+	dbRes, err := u.repo.Create(ctx, domain.URLDB{Code: code, URL: url, CreatedAt: time.Now(), UserID: userID})
 	if err != nil {
 		return res, err
 	}

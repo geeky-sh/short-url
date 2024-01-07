@@ -9,9 +9,8 @@ import (
 	handlers "shorturl/handlers"
 	"shorturl/repositories"
 	"shorturl/usecases"
+	"shorturl/utils/session"
 	"time"
-
-	_ "shorturl/docs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -32,6 +31,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	sess := session.Init()
+
 	v := validator.New()
 
 	r := chi.NewRouter()
@@ -45,10 +46,17 @@ func main() {
 	hh := handlers.NewHealthHandler(db)
 	r.Mount("/metrics", hh.Routes())
 
+	ush := handlers.NewUserHandler(
+		usecases.NewUserUsecase(
+			repositories.NewUserRepository(db),
+		), v, sess,
+	)
+	r.Mount("/users", ush.Routes())
+
 	uh := handlers.NewURLhandler(
 		usecases.NewURLUsecase(
 			repositories.NewURLRepository(db),
-		), v,
+		), v, sess,
 	)
 	r.Mount("/", uh.Routes())
 

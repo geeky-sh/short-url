@@ -25,21 +25,21 @@ func (r urlRepository) Create(ctx context.Context, req domain.URLDB) (domain.URL
 	res := domain.URLDB{}
 
 	sql := `
-	INSERT INTO short_urls (code, url, created_at)
-	VALUES ($1, $2, $3) RETURNING id`
-	_, err := r.db.Exec(ctx, sql, req.Code, req.URL, req.CreatedAt)
+	INSERT INTO urls (code, url, created_at, user_id)
+	VALUES ($1, $2, $3, $4) RETURNING id`
+	_, err := r.db.Exec(ctx, sql, req.Code, req.URL, req.CreatedAt, req.UserID)
 	if err != nil {
 		return res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
 	}
 
-	return domain.URLDB{Code: req.Code, URL: req.URL, CreatedAt: req.CreatedAt}, nil
+	return req, nil
 }
 
 func (r urlRepository) GetByURL(ctx context.Context, url string) (domain.URLDB, utils.AppErr) {
 	res := domain.URLDB{}
 
 	sql := `
-	SELECT id, code, url, created_at FROM short_urls
+	SELECT id, code, url, created_at FROM urls
 	WHERE url=$1`
 	if err := r.db.QueryRow(ctx, sql, url).Scan(res.ID, res.Code, res.URL, res.CreatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -54,7 +54,7 @@ func (r urlRepository) GetByCode(ctx context.Context, code string) (domain.URLDB
 	res := domain.URLDB{}
 
 	sql := `
-	SELECT id, code, url, created_at FROM short_urls
+	SELECT id, code, url, created_at FROM urls
 	WHERE code=$1`
 	if err := r.db.QueryRow(ctx, sql, code).Scan(&res.ID, &res.Code, &res.URL, &res.CreatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -72,13 +72,13 @@ func (r urlRepository) List(ctx context.Context, req domain.URLListReq) (int, []
 	offset := (req.Page - 1) * req.Limit
 
 	csql := `
-	SELECT COUNT(*) from short_urls`
+	SELECT COUNT(*) from urls`
 	if err := r.db.QueryRow(ctx, csql).Scan(&count); err != nil {
 		return 0, res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
 	}
 
 	sql := `
-	SELECT id, code, url, created_at from short_urls
+	SELECT id, code, url, created_at from urls
 	LIMIT $1
 	OFFSET $2`
 
