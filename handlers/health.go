@@ -1,18 +1,18 @@
 package handlers
 
 import (
+	"database/sql"
 	"net/http"
 	"shorturl/utils"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type healthHandler struct {
-	db *pgxpool.Pool
+	db *sql.DB
 }
 
-func NewHealthHandler(db *pgxpool.Pool) healthHandler {
+func NewHealthHandler(db *sql.DB) healthHandler {
 	return healthHandler{db}
 }
 
@@ -23,9 +23,7 @@ func (h *healthHandler) Routes() http.Handler {
 }
 
 func (h *healthHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	if err := h.db.Ping(ctx); err != nil {
+	if err := h.db.Ping(); err != nil {
 		utils.WriteMsgRes(w, http.StatusInternalServerError, "Unable to connect to DB")
 	}
 

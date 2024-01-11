@@ -31,7 +31,7 @@ type URLListReq struct {
 
 type URLListResp struct {
 	Count   int     `json:"count"`
-	Results []URLDB `json:"result"`
+	Results []URLDB `json:"results"`
 }
 
 type URLUsecase interface {

@@ -5,7 +5,6 @@ import (
 	"shorturl/domain"
 	"shorturl/utils"
 	"shorturl/utils/session"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
@@ -72,9 +71,6 @@ func (h *userHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sessKey := h.sess.Create(res.ID, res.Username)
-	http.SetCookie(w, &http.Cookie{
-		Name: session.SESSION_KEY, Value: sessKey, Path: "/", Expires: time.Now().Add(72 * time.Hour)},
-	)
 
-	utils.WriteMsgRes(w, http.StatusOK, "Login Successful")
+	utils.WriteRes(w, http.StatusOK, map[string]string{"access_token": sessKey})
 }

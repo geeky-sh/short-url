@@ -3,6 +3,12 @@ swag:
 	swagger generate spec -w cmd/server -o ./swagger.yaml
 	swagger serve -F=swagger swagger.yaml
 
+liteup:
+	~/go/bin/migrate -database sqlite3://cmd/server/main.db\?mode=rwc --path db/migrations up
+
+litedown:
+	~/go/bin/migrate -database sqlite3://cmd/server/main.db\?mode=rwc --path db/migrations down
+
 dbdown:
 	migrate -database postgres://aash:@localhost:5432/shorturl\?sslmode=disable --path db/migrations down
 

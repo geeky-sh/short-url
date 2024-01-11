@@ -8,6 +8,8 @@ const ERR_UNKNOWN = 999
 const ERR_ALREADY_EXISTS = 103
 const ERR_INVALID_CREDS = 104
 
+const ERR_MSG_NO_OBJECT_FOUND = "sql: no rows in result set"
+
 type AppErr interface {
 	Error() string
 	ErrCode() int

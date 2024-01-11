@@ -2,22 +2,22 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"shorturl/domain"
 	"shorturl/utils"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const TABLE_NAME = "urls"
 
 type urlRepository struct {
-	db *pgxpool.Pool
+	db *sql.DB
 	tb string
 }
 
-func NewURLRepository(db *pgxpool.Pool) domain.URLRepository {
+func NewURLRepository(db *sql.DB) domain.URLRepository {
 	return urlRepository{db, TABLE_NAME}
 }
 
@@ -27,7 +27,7 @@ func (r urlRepository) Create(ctx context.Context, req domain.URLDB) (domain.URL
 	sql := `
 	INSERT INTO urls (code, url, created_at, user_id)
 	VALUES ($1, $2, $3, $4) RETURNING id`
-	_, err := r.db.Exec(ctx, sql, req.Code, req.URL, req.CreatedAt, req.UserID)
+	_, err := r.db.ExecContext(ctx, sql, req.Code, req.URL, req.CreatedAt, req.UserID)
 	if err != nil {
 		return res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
 	}
@@ -41,7 +41,7 @@ func (r urlRepository) GetByURL(ctx context.Context, url string) (domain.URLDB, 
 	sql := `
 	SELECT id, code, url, created_at FROM urls
 	WHERE url=$1`
-	if err := r.db.QueryRow(ctx, sql, url).Scan(res.ID, res.Code, res.URL, res.CreatedAt); err != nil {
+	if err := r.db.QueryRowContext(ctx, sql, url).Scan(res.ID, res.Code, res.URL, res.CreatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return res, utils.NewAppErr(err.Error(), utils.ERR_OBJ_NOT_FOUND)
 		}
@@ -56,8 +56,8 @@ func (r urlRepository) GetByCode(ctx context.Context, code string) (domain.URLDB
 	sql := `
 	SELECT id, code, url, created_at FROM urls
 	WHERE code=$1`
-	if err := r.db.QueryRow(ctx, sql, code).Scan(&res.ID, &res.Code, &res.URL, &res.CreatedAt); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+	if err := r.db.QueryRowContext(ctx, sql, code).Scan(&res.ID, &res.Code, &res.URL, &res.CreatedAt); err != nil {
+		if err.Error() == utils.ERR_MSG_NO_OBJECT_FOUND {
 			return res, utils.NewAppErr(err.Error(), utils.ERR_OBJ_NOT_FOUND)
 		}
 		return res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
@@ -73,23 +73,26 @@ func (r urlRepository) List(ctx context.Context, req domain.URLListReq) (int, []
 
 	csql := `
 	SELECT COUNT(*) from urls`
-	if err := r.db.QueryRow(ctx, csql).Scan(&count); err != nil {
+	if err := r.db.QueryRowContext(ctx, csql).Scan(&count); err != nil {
 		return 0, res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
 	}
 
 	sql := `
-	SELECT id, code, url, created_at from urls
+	SELECT id, user_id, code, url, created_at from urls
 	LIMIT $1
 	OFFSET $2`
 
-	rows, err := r.db.Query(ctx, sql, req.Limit, offset)
+	rows, err := r.db.QueryContext(ctx, sql, req.Limit, offset)
 	if err != nil {
 		return 0, res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
 	}
 
-	res, err = pgx.CollectRows[domain.URLDB](rows, pgx.RowToStructByPos[domain.URLDB])
-	if err != nil {
-		return 0, res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
+	for rows.Next() {
+		r := domain.URLDB{}
+		if err := rows.Scan(&r.ID, &r.UserID, &r.Code, &r.URL, &r.CreatedAt); err != nil {
+			return 0, res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
+		}
+		res = append(res, r)
 	}
 
 	return count, res, nil

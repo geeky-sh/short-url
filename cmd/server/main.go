@@ -1,7 +1,7 @@
 package main
 
 import (
-	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,9 +14,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/go-playground/validator/v10"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
@@ -25,7 +26,7 @@ func main() {
 		log.Fatal("Unable to load .env")
 	}
 
-	db, err := pgxpool.New(context.Background(), os.Getenv("SHORTURL_DATABASE_URL"))
+	db, err := sql.Open("sqlite3", "main.db?mode=rwc")
 	if err != nil {
 		fmt.Printf("unable to connect to database: %v\n", err)
 		os.Exit(1)
@@ -42,6 +43,7 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(3 * time.Second))
+	r.Use(cors.Handler(cors.Options{AllowedHeaders: []string{"*"}}))
 
 	hh := handlers.NewHealthHandler(db)
 	r.Mount("/metrics", hh.Routes())
@@ -60,5 +62,5 @@ func main() {
 	)
 	r.Mount("/", uh.Routes())
 
-	http.ListenAndServe(":3000", r)
+	http.ListenAndServe(":4000", r)
 }

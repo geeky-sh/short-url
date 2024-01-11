@@ -2,19 +2,17 @@ package repositories
 
 import (
 	"context"
-	"errors"
+	"database/sql"
+	"fmt"
 	"shorturl/domain"
 	"shorturl/utils"
-
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type userRepository struct {
-	db *pgxpool.Pool
+	db *sql.DB
 }
 
-func NewUserRepository(db *pgxpool.Pool) domain.UserRepository {
+func NewUserRepository(db *sql.DB) domain.UserRepository {
 	return userRepository{db: db}
 }
 
@@ -23,10 +21,11 @@ func (r userRepository) Create(ctx context.Context, req domain.UserDB) (domain.U
 
 	sql := `
 	INSERT INTO users (username, encrypted_password, created_at)
-	VALUES ($1, $2, $3) RETURNING id
+	VALUES ($1, $2, $3)
 	`
-	_, err := r.db.Exec(ctx, sql, req.Username, req.EncryptedPassword, req.CreatedAt)
+	_, err := r.db.ExecContext(ctx, sql, req.Username, req.EncryptedPassword, req.CreatedAt)
 	if err != nil {
+		fmt.Println(err.Error())
 		return res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
 	}
 	return req, nil
@@ -39,8 +38,9 @@ func (r userRepository) GetByUsername(ctx context.Context, username string) (dom
 	SELECT id, username, encrypted_password FROM users
 	WHERE username=$1
 	`
-	if err := r.db.QueryRow(ctx, sql, username).Scan(&res.ID, &res.Username, &res.EncryptedPassword); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+	if err := r.db.QueryRowContext(ctx, sql, username).Scan(&res.ID, &res.Username, &res.EncryptedPassword); err != nil {
+		fmt.Println(err.Error())
+		if err.Error() == utils.ERR_MSG_NO_OBJECT_FOUND {
 			return res, utils.NewAppErr(err.Error(), utils.ERR_OBJ_NOT_FOUND)
 		}
 		return res, utils.NewAppErr(err.Error(), utils.ERR_UNKNOWN)
