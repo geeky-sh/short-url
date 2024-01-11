@@ -1,15 +1,17 @@
 #build stage
 FROM golang:alpine AS builder
 RUN apk add --no-cache git
-WORKDIR /go/src/app
+RUN apk add --no-cache --update go gcc g++
+WORKDIR /app
 COPY . .
 RUN go get -d -v ./...
-RUN go build -o /go/bin/app -v ./...
+RUN CGO_ENABLED=1 GOOS=linux go build -o myapp cmd/server/main.go
 
 #final stage
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
-COPY --from=builder /go/bin/app /app
-ENTRYPOINT /app
+WORKDIR /app
+COPY --from=builder /app/myapp .
 LABEL Name=shorturl Version=0.0.1
-EXPOSE 3000
+EXPOSE 4000
+ENTRYPOINT ["/app/myapp"]

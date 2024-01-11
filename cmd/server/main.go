@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	handlers "shorturl/handlers"
@@ -16,16 +15,10 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-playground/validator/v10"
-	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Unable to load .env")
-	}
-
 	db, err := sql.Open("sqlite3", "main.db?mode=rwc")
 	if err != nil {
 		fmt.Printf("unable to connect to database: %v\n", err)
